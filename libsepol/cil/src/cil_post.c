@@ -1,16 +1,16 @@
 /*
  * Copyright 2011 Tresys Technology, LLC. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *    1. Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
- * 
+ *
  *    2. Redistributions in binary form must reproduce the above copyright notice,
  *       this list of conditions and the following disclaimer in the documentation
  *       and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY TRESYS TECHNOLOGY, LLC ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
@@ -21,7 +21,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * The views and conclusions contained in the software and documentation are those
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of Tresys Technology, LLC.
@@ -158,7 +158,7 @@ static int cil_verify_is_list(struct cil_list *list, enum cil_flavor flavor)
 				}
 			}
 			break;
-		}	
+		}
 	}
 	return CIL_TRUE;
 }
@@ -169,7 +169,7 @@ static void cil_post_fc_fill_data(struct fc_data *fc, const char *path)
 	fc->meta = 0;
 	fc->stem_len = 0;
 	fc->str_len = 0;
-	
+
 	while (path[c] != '\0') {
 		switch (path[c]) {
 		case '.':
@@ -276,7 +276,7 @@ int cil_post_portcon_compare(const void *a, const void *b)
 	struct cil_portcon *aportcon = *(struct cil_portcon**)a;
 	struct cil_portcon *bportcon = *(struct cil_portcon**)b;
 
-	rc = (aportcon->port_high - aportcon->port_low) 
+	rc = (aportcon->port_high - aportcon->port_low)
 		- (bportcon->port_high - bportcon->port_low);
 	if (rc == 0) {
 		if (aportcon->port_low < bportcon->port_low) {
@@ -389,7 +389,7 @@ int cil_post_iomemcon_compare(const void *a, const void *b)
 	struct cil_iomemcon *aiomemcon = *(struct cil_iomemcon**)a;
 	struct cil_iomemcon *biomemcon = *(struct cil_iomemcon**)b;
 
-	rc = (aiomemcon->iomem_high - aiomemcon->iomem_low) 
+	rc = (aiomemcon->iomem_high - aiomemcon->iomem_low)
 		- (biomemcon->iomem_high - biomemcon->iomem_low);
 	if (rc == 0) {
 		if (aiomemcon->iomem_low < biomemcon->iomem_low) {
@@ -408,7 +408,7 @@ int cil_post_ioportcon_compare(const void *a, const void *b)
 	struct cil_ioportcon *aioportcon = *(struct cil_ioportcon**)a;
 	struct cil_ioportcon *bioportcon = *(struct cil_ioportcon**)b;
 
-	rc = (aioportcon->ioport_high - aioportcon->ioport_low) 
+	rc = (aioportcon->ioport_high - aioportcon->ioport_low)
 		- (bioportcon->ioport_high - bioportcon->ioport_low);
 	if (rc == 0) {
 		if (aioportcon->ioport_low < bioportcon->ioport_low) {
@@ -491,7 +491,23 @@ int cil_post_genfscon_context_compare(const void *a, const void *b)
 {
 	struct cil_genfscon *a_genfscon = *(struct cil_genfscon**)a;
 	struct cil_genfscon *b_genfscon = *(struct cil_genfscon**)b;
-	return context_compare(a_genfscon->context, b_genfscon->context);
+	int rc = context_compare(a_genfscon->context, b_genfscon->context);
+	if(rc) {
+		fprintf(stderr, "hello %s\n", a_genfscon->fs_str);
+		int bypass = 0;
+		/*
+		 * This conflict has been seen on Xiaomi Mi 9:
+		 * - AOSP Q says (genfscon sysfs /devices/virtual/block/ (u object_r sysfs_devices_block ((s0) (s0))))
+		 * - stock rom says (genfscon sysfs /devices/virtual/block/ (u object_r sysfs_ufs_target ((s0) (s0))))
+		 */
+		if(strcmp(a_genfscon->path_str, "/devices/virtual/block/") == 0)
+			bypass = 1;
+		if(bypass == 1) {
+			fprintf(stderr, "Received conflicting %s vs %s but ignore\n", a_genfscon->path_str, b_genfscon->path_str);
+			return 0;
+		}
+	}
+	return rc;
 }
 
 int cil_post_netifcon_context_compare(const void *a, const void *b)
@@ -656,7 +672,7 @@ static int __cil_post_db_count_helper(struct cil_tree_node *node, uint32_t *fini
 		break;
 	case CIL_PCIDEVICECON:
 		db->pcidevicecon->count++;
-		break;	
+		break;
 	case CIL_DEVICETREECON:
 		db->devicetreecon->count++;
 		break;
@@ -1290,7 +1306,7 @@ static int __cil_expr_to_bitmap_helper(struct cil_list_item *curr, enum cil_flav
 		rc = __cil_expr_to_bitmap(l, bitmap, max, db);
 		if (rc != SEPOL_OK) {
 			ebitmap_destroy(bitmap);
-		}	
+		}
 	} else if (flavor == CIL_PERMISSIONX) {
 		// permissionx expressions aren't resolved into anything, so curr->flavor
 		// is just a CIL_STRING, not a CIL_DATUM, so just check on flavor for those
@@ -1671,7 +1687,7 @@ static int __cil_post_db_roletype_helper(struct cil_tree_node *node, uint32_t *f
 			struct cil_roleattribute *attr = roletype->role;
 			ebitmap_node_t *rnode;
 			unsigned int i;
-	
+
 			ebitmap_for_each_positive_bit(attr->roles, rnode, i) {
 				struct cil_role *role = NULL;
 
@@ -2152,7 +2168,7 @@ static int __evaluate_classperms_list(struct cil_list *classperms, struct cil_db
 						goto exit;
 					}
 				}
-			}	
+			}
 		} else { /* SET */
 			struct cil_classperms_set *cp_set = curr->data;
 			struct cil_classpermission *cp = cp_set->set;
@@ -2565,5 +2581,5 @@ int cil_post_process(struct cil_db *db)
 
 exit:
 	return rc;
-		
+
 }
